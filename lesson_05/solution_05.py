@@ -1,40 +1,66 @@
-"""Домашнее задание № 5. Скользящее окно фиксированного размера.
 
-Заполните тела функций. Проверка из корня репозитория:
-
-    pytest lesson_05 -q
-
-В обеих задачах нет срезов и вызовов sum внутри цикла: окно пересчитывается
-сдвигом — плюс пришедший элемент, минус ушедший.
-"""
+"""Домашнее задание № 5. Скользящее окно фиксированного размера."""
 
 
 def step_score(steps, k, lower, upper):
-    """Задача 1. Очки фитнес-браслета (LeetCode 1176).
+    """Подсчитать очки фитнес-браслета за все окна длины k."""
+    n = len(steps)
 
-    steps[i] — число шагов в день i. Браслет оценивает каждые k дней подряд:
-    сумма шагов меньше lower — минус одно очко, больше upper — плюс одно очко,
-    от lower до upper включительно — ноль. Вернуть сумму очков по всем окнам.
+    # Сумма первого окна.
+    window_sum = sum(steps[:k])
+    score = 0
 
-    1 <= k <= len(steps), lower <= upper.
-    Список steps не меняется. Время O(n).
-    Пример: step_score([6, 5, 0, 0], 2, 1, 5) == 0.
-    """
-    raise NotImplementedError
+    def evaluate(total):
+        if total < lower:
+            return -1
+        if total > upper:
+            return 1
+        return 0
+
+    score += evaluate(window_sum)
+
+    # Сдвигаем окно: убираем ушедший день,
+    # добавляем новый день.
+    for i in range(k, n):
+        window_sum += steps[i] - steps[i - k]
+        score += evaluate(window_sum)
+
+    return score
 
 
 def decrypt(code, k):
-    """Задача 2. Кодовый замок (LeetCode 1652).
+    """Расшифровать круговой код с помощью скользящего окна."""
+    n = len(code)
 
-    code — числа, записанные по кругу: после последнего снова идёт первый.
-    Каждое число заменяется одновременно:
-      k > 0 — суммой k следующих чисел;
-      k < 0 — суммой |k| предыдущих чисел;
-      k == 0 — нулём.
-    Вернуть новый список, code не меняется.
+    if k == 0:
+        return [0] * n
 
-    В code хотя бы одно число, |k| < len(code).
-    Время O(n), память O(1) кроме ответа.
-    Пример: decrypt([5, 7, 1, 4], 3) == [12, 10, 16, 13].
-    """
-    raise NotImplementedError
+    result = []
+    window_size = abs(k)
+
+    if k > 0:
+        # Сумма k следующих чисел для первой позиции.
+        window_sum = sum(code[1:k + 1])
+
+        for i in range(n):
+            result.append(window_sum)
+
+            # Убираем первое число прежнего окна
+            # и добавляем следующее по кругу.
+            window_sum -= code[(i + 1) % n]
+            window_sum += code[(i + k + 1) % n]
+
+    else:
+        # Сумма |k| предыдущих чисел для первой позиции.
+        window_sum = sum(
+            code[j % n] for j in range(k, 0)
+        )
+
+        for i in range(n):
+            result.append(window_sum)
+
+            # При движении вправо меняется граница окна.
+            window_sum -= code[(i + k) % n]
+            window_sum += code[i % n]
+
+    return result
